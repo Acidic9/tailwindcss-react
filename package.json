@@ -1,0 +1,14 @@
+{
+  "name": "tailwindcss-react",
+  "version": "1.0.0",
+  "description": "React component for tailwind",
+  "author": "Acidic9",
+  "scripts": {
+    "run": "node ./src/index.js"
+  },
+  "dependencies": {
+    "lodash": "^4.17.15",
+    "postcss": "^7.0.17",
+    "tailwindcss": "^1.0.0-beta.10"
+  }
+}
