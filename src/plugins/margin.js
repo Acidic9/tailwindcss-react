@@ -33,7 +33,29 @@ const display = config => {
           )
         })
 
-        resolve(keys)
+        const marginResolverStr = `
+margin(props: { [key: string]: any; }): string[] {
+  const keysArray = ${`${JSON.stringify(Array.from(keys.keys()))}`}
+  const filtered = Object.keys(props)
+    .filter(prop => keysArray.some(k => k === prop))
+    .map(propKey => [propKey, props[propKey]])
+    .map(([key, value]) => {
+      const negativeStr =
+        typeof value === 'number' && value < 0 ? '-' : ''
+      const keyStr = key
+      const valueStr = String(
+        typeof value === 'number' ? Math.abs(value) : value
+      )
+      return \`\${negativeStr}\${keyStr}-\${valueStr}\`
+    })
+  return filtered
+}
+`
+
+        resolve({
+          keys: keys,
+          resolver: marginResolverStr,
+        })
       },
     })
   })

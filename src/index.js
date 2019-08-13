@@ -11,16 +11,15 @@ const main = () => {
   const config = resolveConfig([defaultConfig])
 
   Promise.all([margin(config), padding(config), display(config)]).then(
-    allkeys => {
-      // allkeys: Map[]
+    allKeys => {
+      // allKeys: { keys: Map[], resolver: string }
       const prefix = `interface ElProps {`
       const suffix = `}`
 
       const bodyLines = []
 
-      const body = allkeys.forEach(pluginKeys => {
+      const body = allKeys.forEach(({ keys: pluginKeys }) => {
         Array.from(pluginKeys).forEach(([key, types]) => {
-          console.log(types)
           const typesStr = types.map(type => {
             if (type === Boolean) {
               return 'boolean'
@@ -40,7 +39,23 @@ ${bodyLines.join('\n')}
 ${suffix}
 `)
 
-      // console.log(allkeys[0] instanceof Map)
+      // Resolvers
+      const resolversInner = allKeys
+        .map(({ resolver }) => resolver.trim())
+        .join(',\n  ')
+      console.log(`
+const resolvers: { [key: string]: (props: { [key: string]: any; }) => string[]; } = {
+  ${resolversInner}
+}
+`)
+
+      // Render function
+      console.log(`
+const El = (props: ElProps) => {
+  const classes = Object.keys(resolvers).map(resolverKey => resolvers[resolverKey](props).join(' ')).join(' ')
+  console.log(classes)
+}
+`)
     }
   )
 }

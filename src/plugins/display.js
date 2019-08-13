@@ -21,7 +21,22 @@ const display = config => {
           keys.set(key, [types])
         })
 
-        resolve(keys)
+        const marginResolverStr = `
+        display(props: { [key: string]: any; }): string[] {
+          const keysArray = ${`${JSON.stringify(Array.from(keys.keys()))}`}
+          const filtered = Object.keys(props)
+            .filter(prop => keysArray.some(k => k === prop))
+            .map(propKey => [propKey, props[propKey]])
+            .filter(([key, value]) => Boolean(value))
+            .map(([key, value]) => key)
+          return filtered
+        }
+        `
+
+        resolve({
+          keys,
+          resolver: marginResolverStr,
+        })
       },
     })
   })
