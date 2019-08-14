@@ -23,7 +23,7 @@
     "rounded-br*",
     "rounded-bl*"
   ],
-  "borderStyle": ["border*"],
+  "borderStyle": ["border", "border*"],
   "borderWidth": [
     "rounded*",
     "rounded-t*",
