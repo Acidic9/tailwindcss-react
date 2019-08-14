@@ -8,7 +8,7 @@
       "type": "node",
       "request": "launch",
       "name": "Launch Program",
-      "program": "${workspaceFolder}/src/index.js",
+      "program": "${workspaceFolder}/src/plugins-to-props.js",
       "outFiles": [
         "${workspaceFolder}/**/*.js"
       ]
