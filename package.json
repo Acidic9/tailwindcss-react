@@ -4,7 +4,7 @@
   "description": "React component for tailwind",
   "author": "Acidic9",
   "scripts": {
-    "run": "node ./src/index.js"
+    "run": "node ./src/plugins-to-props.js"
   },
   "dependencies": {
     "flat": "^4.1.0",
