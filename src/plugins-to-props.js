@@ -1,3 +1,10 @@
+// Templating
+const Mustache = require('mustache')
+const fs = require('fs')
+const path = require('path')
+const TwTsx = fs.readFileSync(path.join(__dirname, 'Tw.tsx.dot')).toString()
+const prettier = require('prettier')
+
 // Utils
 const processPlugin = require('./utils/processPlugin')
 const parseStyles = require('./utils/parseStyles')
@@ -77,7 +84,6 @@ for (const selector in pluginClasses) {
 const schemaClasses = Object.values(flat(schema))
 const tsTypes = schemaClasses
   .map(schemaClass => {
-    // bg* or block ...
     const pluginSelectors = Object.keys(pluginClasses)
     if (schemaClass.endsWith('*')) {
       const matchingClasses = pluginSelectors.filter(pluginSelector => {
@@ -90,7 +96,6 @@ const tsTypes = schemaClasses
 
       const values = matchingClasses
         .map(matchingClass => {
-          // content-center
           const isNegative = matchingClass.startsWith('-')
           if (isNegative) {
             matchingClass = matchingClass.substr(1)
@@ -145,79 +150,35 @@ for (const propName in tsTypesObject) {
 
 const propInterface = []
 for (const propName in tsTypesObject) {
-  propInterface.push(`${propName}?: ${capitalize(propName)}`)
+  propInterface.push(
+    `${propName}?: ${capitalize(propName)} | ${capitalize(propName)}[]`
+  )
 }
 
-console.log(`import * as React from 'react'`)
-console.log('')
-console.log(twTypes.join('\n'))
-console.log('')
-console.log('interface ElProps {')
-console.log('  children?: React.ReactNode')
-console.log('  is?: string')
-console.log('  [x: string]: any')
-console.log('')
-console.log(
-  '  // Below was generated using https://github.com/Acidic9/tailwindcss-react (WIP)'
-)
-console.log(propInterface.map(ln => `  ${ln}`).join('\n'))
-console.log('}')
-console.log('')
-console.log('const convertToKebabCase = (str: string) => {')
-console.log('  return str')
-console.log(`    .replace(/([a-z])([A-Z])/g, '$1-$2')`)
-console.log(`    .replace(/\s+/g, '-')`)
-console.log(`    .toLowerCase()`)
-console.log('}')
-console.log('')
-console.log('const resolveTwClasses = (props: { [key: string]: any }) => {')
-console.log('  const twProps = {}')
-console.log('  Object.keys(props)')
-console.log('    .filter(prop =>')
-console.log(
-  `      ${JSON.stringify(Object.keys(tsTypesObject))}.includes(prop))`
-)
-console.log('    .forEach(propName => {')
-console.log('      twProps[propName] = props[propName]')
-console.log('    })')
-console.log('')
-console.log('  const classes: string[] = []')
-console.log('  for (const propName in twProps) {')
-console.log('    const kebabPropname = convertToKebabCase(propName)')
-console.log('    let value = String(twProps[propName])')
-console.log('')
-console.log(`    if (typeof value === 'boolean') {`)
-console.log('      classes.push(kebabPropname)')
-console.log('      continue')
-console.log('    }')
-console.log('')
-console.log("    const isNegative = value.startsWith(' - ')")
-console.log('    if (isNegative) {')
-console.log('      value = value.substr(1)')
-console.log('    }')
-console.log('')
-console.log(`    const valueStr = value === 'true' ? '' : \`-\${value}\``)
-console.log('')
-console.log(
-  `    classes.push(\`\${isNegative ? '-' : ''}\${kebabPropname}\${valueStr}\`)`
-)
-console.log('  }')
-console.log('')
-console.log(`  return classes.join(' ')`)
-console.log('}')
-console.log('')
-console.log('const El: React.FC<ElProps> = (props: ElProps) => {')
-console.log('  const classes = resolveTwClasses(props)')
-console.log(`  const tag = props.is || 'div'`)
-console.log('  return React.createElement(')
-console.log('    tag,')
-console.log('    {')
-console.log('      ...props,')
-console.log('      children: undefined,')
-console.log('      class: classes,')
-console.log('    },')
-console.log('    props.children')
-console.log('  )')
-console.log('}')
-console.log('')
-console.log('export default El')
+Mustache.escape = function(text) {
+  return text
+}
+let result = Mustache.render(TwTsx, {
+  propTypes: twTypes.join('\n'),
+  twProps: propInterface.map(ln => `  ${ln}`).join('\n'),
+  twPropKeys: JSON.stringify(Object.keys(tsTypesObject)),
+})
+
+result = prettier.format(result, {
+  parser: 'typescript',
+
+  arrowParens: 'avoid',
+  bracketSpacing: true,
+  insertPragma: false,
+  jsxBracketSameLine: false,
+  printWidth: 80,
+  proseWrap: 'preserve',
+  requirePragma: false,
+  semi: false,
+  singleQuote: true,
+  tabWidth: 2,
+  trailingComma: 'es5',
+  useTabs: false,
+})
+
+fs.writeFileSync(path.join(__dirname, '..', 'dist', 'Ts.tsx'), result)

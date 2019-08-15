@@ -1,0 +1,84 @@
+import * as React from 'react'
+
+{{ propTypes }}
+
+export interface TwProps {
+  children?: React.ReactNode
+  is?: string
+  [x: string]: any
+
+  // Below was generated using https://github.com/Acidic9/tailwindcss-react (WIP)
+  {{ twProps }}
+}
+
+const convertToKebabCase = (str: string) => {
+  return str
+    .replace(/([a-z])([A-Z])/g, '$1-$2')
+    .replace(/\s+/g, '-')
+    .toLowerCase()
+}
+
+const twPropKeys = {{ twPropKeys }}
+
+const resolveTwClasses = (props: { [key: string]: any }) => {
+  const twProps = Object.keys(props)
+    .filter(prop => twPropKeys.includes(prop))
+    .reduce((acc, propName) => {
+      acc[propName] = props[propName]
+      return acc
+    }, {})
+
+  const remainingProps = Object.keys(props)
+    .filter(prop => !twPropKeys.includes(prop))
+    .reduce((acc, propName) => {
+      acc[propName] = props[propName]
+      return acc
+    }, {})
+
+  const resolveValue = (ps: { [key: string]: any }) => {
+    const classes: string[] = []
+
+    for (const propName in ps) {
+      const kebabPropname = convertToKebabCase(propName)
+      const value = ps[propName]
+
+      if (value instanceof Array) {
+        value.forEach(val => classes.push(...resolveValue({ [propName]: val })))
+        continue
+      }
+
+      if (typeof value === 'boolean' && value) {
+        classes.push(kebabPropname)
+        continue
+      }
+
+      // typeof value === string | number
+      const strValue = String(value)
+      const isNegative = strValue.startsWith('-')
+      const prefix = isNegative ? '-' : ''
+      classes.push(`${prefix}${kebabPropname}-${strValue}`)
+    }
+
+    return classes
+  }
+
+  const classes = resolveValue(twProps)
+
+  return { classes: classes.join(' '), remainingProps }
+}
+
+const Tw: React.FC<TwProps> = (props: TwProps) => {
+  const { classes, remainingProps } = resolveTwClasses(props)
+  const tag = props.is || 'div'
+  return React.createElement(
+    tag,
+    {
+      ...remainingProps,
+      children: undefined,
+      class: classes,
+    },
+    props.children
+  )
+}
+
+export default Tw
